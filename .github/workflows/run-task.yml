@@ -1,0 +1,60 @@
+name: Run WP Task (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run (report only) or commit (apply changes)"
+        required: true
+        default: "dry-run"
+        type: choice
+        options: [ dry-run, commit ]
+      command:
+        description: "WP-CLI command to run (e.g. 'plugin list' or 'cache flush')"
+        required: true
+        default: "plugin list"
+
+jobs:
+  task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup SSH
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Run WP-CLI over SSH
+        run: |
+          set -euo pipefail
+          USER="${{ secrets.HOSTINGER_USERNAME }}"
+          HOST="${{ secrets.HOSTINGER_HOST }}"
+          PORT="${{ secrets.HOSTINGER_PORT }}"
+          WPROOT="/home/${USER}/websites/OPuOsKi4J/public_html"
+          CMD="${{ github.event.inputs.command }}"
+          MODE="${{ github.event.inputs.mode }}"
+          SSH="ssh -p ${PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/id_ed25519"
+
+          echo "Mode: ${MODE}"
+          echo "Command: wp ${CMD}"
+
+          if [ "${MODE}" = "dry-run" ]; then
+            echo "--- DRY RUN — no changes will be applied ---"
+            ${SSH} "${USER}@${HOST}" \
+              "cd '${WPROOT}'; \
+               if command -v wp >/dev/null 2>&1; then WP=wp; \
+               else curl -sSLO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar; chmod +x wp-cli.phar; WP='php wp-cli.phar'; fi; \
+               echo '[DRY-RUN] Would run: wp ${CMD}'; \
+               \$WP ${CMD} --path='${WPROOT}' 2>&1 || true"
+          else
+            echo "--- COMMIT MODE — applying changes ---"
+            ${SSH} "${USER}@${HOST}" \
+              "cd '${WPROOT}'; \
+               if command -v wp >/dev/null 2>&1; then WP=wp; \
+               else curl -sSLO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar; chmod +x wp-cli.phar; WP='php wp-cli.phar'; fi; \
+               \$WP ${CMD} --path='${WPROOT}' 2>&1"
+          fi

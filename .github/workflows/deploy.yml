@@ -1,0 +1,63 @@
+name: Deploy Theme
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup SSH
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Deploy + reset caches
+        run: |
+          set -euo pipefail
+          USER="${{ secrets.HOSTINGER_USERNAME }}"
+          HOST="${{ secrets.HOSTINGER_HOST }}"
+          PORT="${{ secrets.HOSTINGER_PORT }}"
+          THEME="postero-child"
+          SITE_URL="https://theartframer.us"
+          SSH="ssh -p ${PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+          # 1) Hardcoded confirmed path (OPu0sKi4J with zero)
+          TARGET="websites/OPu0sKi4J/public_html/wp-content/themes/${THEME}"
+          echo "✅ Deploying to: ${TARGET}"
+
+          # 2) Sync — theme IS the repo root, so source is ./
+          rsync -avz --delete \
+            --exclude ".git" \
+            --exclude ".github" \
+            --exclude ".vscode" \
+            --exclude "node_modules" \
+            --exclude "README.md" \
+            -e "${SSH} -i ~/.ssh/id_ed25519" \
+            ./ \
+            "${USER}@${HOST}:${TARGET}/"
+
+          # 3a) LiteSpeed page + object cache via WP-CLI
+          WPROOT="${TARGET%/wp-content/themes/*}"
+          ${SSH} -i ~/.ssh/id_ed25519 "${USER}@${HOST}" \
+            "cd '${WPROOT}'; \
+             if command -v wp >/dev/null 2>&1; then WP=wp; \
+             else curl -sSLO https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar; chmod +x wp-cli.phar; WP='php wp-cli.phar'; fi; \
+             \$WP litespeed-purge all --path='${WPROOT}' 2>/dev/null || true; \
+             \$WP cache flush --path='${WPROOT}' 2>/dev/null || true; \
+             echo '✅ LiteSpeed + object cache purged'"
+
+          # 3b) PHP OPcache — must hit over HTTP (runs in FPM, not CLI)
+          set +e
+          OC=$(printf '%s' '<?php if(function_exists("opcache_reset")){opcache_reset();} echo "OC_OK";' | base64 -w0)
+          ${SSH} -i ~/.ssh/id_ed25519 "${USER}@${HOST}" "echo '${OC}' | base64 -d > '${TARGET}/_oc.php'"
+          curl -fsS "${SITE_URL}/wp-content/themes/${THEME}/_oc.php" || echo "(OPcache curl failed — non-fatal)"
+          ${SSH} -i ~/.ssh/id_ed25519 "${USER}@${HOST}" "rm -f '${TARGET}/_oc.php'"
+          echo "✅ Deploy + all cache resets complete."
