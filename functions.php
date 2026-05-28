@@ -3190,3 +3190,24 @@ add_action('wp_head', function() {
   </style>';
 });
 
+
+
+// Hide Themes section from shop sidebar
+add_action('wp_head', function() {
+  echo '<style>.postero-product-themes-widget, .widget_postero_product_themes, .sidebar .widget:has(.product-themes) { display:none!important; }</style>';
+});
+
+// Add Size filter to shop sidebar
+add_action('dynamic_sidebar_before', function($index) {
+  if ($index === 'shop-sidebar' || $index === 'sidebar-shop' || strpos($index,'shop') !== false) {
+    echo '<div class="widget widget_layered_nav"><h2 class="widget-title">Filter By Size</h2><ul>';
+    $sizes = ['2x3-ft','2x3-5-ft','24-ft','2x5-ft','2-5x3-ft','2-5x4-ft','2-5x5-ft','3x4-ft','3x5-ft','3x6-ft','4x3-ft','4x4-ft','4x5-ft','4x6-ft'];
+    $labels = ['2x3 ft','2x3.5 ft','2x4 ft','2x5 ft','2.5x3 ft','2.5x4 ft','2.5x5 ft','3x4 ft','3x5 ft','3x6 ft','4x3 ft','4x4 ft','4x5 ft','4x6 ft'];
+    foreach($sizes as $i => $slug) {
+      $url = home_url('/product-category/art-accessories/frame-sizes/')  . $slug . '/';
+      echo '<li><a href="' . esc_url($url) . '">' . $labels[$i] . '</a></li>';
+    }
+    echo '</ul></div>';
+  }
+});
+
