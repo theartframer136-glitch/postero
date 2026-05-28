@@ -3173,3 +3173,20 @@ add_action('init', function() {
   update_option('woocommerce_registration_generate_username', 'no');
 });
 
+
+
+// Hide Themes filter from shop sidebar
+add_action('wp_head', function() {
+  echo '<style>
+  .widget_product_tag_cloud, 
+  .postero-product-themes,
+  .wc-layered-nav-terms.pa_themes,
+  .widget[id*=themes],
+  .sidebar .widget:has(.pa_themes),
+  li.pa_themes,
+  .woocommerce-widget-layered-nav:has(a[href*=themes]) {
+    display: none !important;
+  }
+  </style>';
+});
+
