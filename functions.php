@@ -3149,3 +3149,17 @@ add_filter('woocommerce_currency', function() { return 'USD'; });
 // Force USD symbol
 add_filter('woocommerce_currency_symbol', function($symbol, $currency) { if ($currency === 'USD') return '$'; return $symbol; }, 10, 2);
 
+
+
+// Fix Login and Register page URLs
+add_filter('login_url', function() { return home_url('/my-account/'); });
+add_filter('register_url', function() { return home_url('/my-account/?action=register'); });
+add_filter('logout_url', function() { return home_url('/my-account/'); });
+
+// Fix footer demo links
+add_filter('wp_nav_menu_items', function($items, $args) {
+  $items = str_replace('demo2wpopal.b-cdn.net/postero', 'theartframer.us', $items);
+  $items = str_replace('chocolate-chicken-365829.hostingersite.com', 'theartframer.us', $items);
+  return $items;
+}, 10, 2);
+
