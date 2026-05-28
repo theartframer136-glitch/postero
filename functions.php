@@ -3229,3 +3229,36 @@ add_action('wp_head', function() {
   </style>';
 });
 
+
+// Fix price filter + enqueue missing WC scripts
+add_action('wp_enqueue_scripts', function() {
+  if (is_shop() || is_product_category() || is_product_tag()) {
+    wp_enqueue_script('wc-price-slider');
+    wp_enqueue_style('woocommerce-layout');
+    wp_enqueue_style('woocommerce-smallscreen');
+    wp_enqueue_style('woocommerce-general');
+  }
+});
+
+// Fix price filter FILTER button submission
+add_action('wp_footer', function() {
+  if (is_shop() || is_product_category()) { ?>
+  <script>
+  jQuery(document).ready(function($) {
+    $(document).on('click', '.price_slider_wrapper .button, .widget_price_filter .button', function(e) {
+      e.preventDefault();
+      var form = $(this).closest('form');
+      if (form.length) { form.submit(); }
+      else {
+        var url = new URL(window.location.href);
+        var minPrice = $('.price_slider_amount #min_price').val();
+        var maxPrice = $('.price_slider_amount #max_price').val();
+        if (minPrice) url.searchParams.set('min_price', minPrice);
+        if (maxPrice) url.searchParams.set('max_price', maxPrice);
+        window.location.href = url.toString();
+      }
+    });
+  });
+  </script>
+  <?php }
+});
