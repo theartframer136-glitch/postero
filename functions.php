@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $theme          = wp_get_theme('postero');
 define( 'POSTERO_VERSION', $theme['Version'] );
 if ( ! isset( $content_width ) ) $content_width = 900;
@@ -589,7 +589,7 @@ add_action(
 );
 /* ===================================================
    CUSTOM PRODUCT AUTOPLAY SLIDER
-   PURE JS — SINGLE ROW FIXED
+   PURE JS â€” SINGLE ROW FIXED
 =================================================== */
 
 function custom_woocommerce_product_slider() {
@@ -613,7 +613,7 @@ width: 100%;
 .custom-product-track {
 
 display: flex;
-flex-wrap: nowrap; /* ⭐ prevents multi-row */
+flex-wrap: nowrap; /* â­ prevents multi-row */
 
 gap: 25px;
 
@@ -1723,7 +1723,7 @@ z-index: 3;
 .trending-card:hover .no-gallery-text {
 opacity: 1;
 }
-/* ===== Tablet — 2 Cards ===== */
+/* ===== Tablet â€” 2 Cards ===== */
 
 @media (max-width:1024px){
 
@@ -1741,7 +1741,7 @@ height: 220px;
 
 }
 
-/* ===== Mobile — 1 Card ===== */
+/* ===== Mobile â€” 1 Card ===== */
 
 @media (max-width:768px){
 
@@ -2361,13 +2361,13 @@ $product->get_id()
 )
 ); ?>">
 
-♡ Wishlist
+â™¡ Wishlist
 
 </a>
 
 <a href="<?php the_permalink(); ?>">
 
-👁 View
+ðŸ‘ View
 
 </a>
 
@@ -3140,4 +3140,12 @@ return ob_get_clean();
      return $methods;
  }
 
+
+
+
+// Force USD as default currency
+add_filter('woocommerce_currency', function() { return 'USD'; });
+
+// Force USD symbol
+add_filter('woocommerce_currency_symbol', function($symbol, $currency) { if ($currency === 'USD') return '$'; return $symbol; }, 10, 2);
 
