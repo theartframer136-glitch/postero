@@ -3211,3 +3211,21 @@ add_action('dynamic_sidebar_before', function($index) {
   }
 });
 
+
+
+// Hide Themes widget - nuclear CSS approach
+add_action('wp_head', function() {
+  echo '<style>
+  /* Hide themes widget by title text */
+  .widget-title:contains(Themes) ~ *,
+  .woocommerce-widget-layered-nav-list,
+  .widget_postero_product_themes,
+  [class*=themes-widget],
+  [class*=product_themes],
+  [class*=product-themes] {display:none!important;}
+  /* Target sidebar widget containing animal/architecture links */
+  .sidebar li a[href*=product-themes] { display:none!important; }
+  .sidebar .widget:has(a[href*=product-themes]) { display:none!important; }
+  </style>';
+});
+
