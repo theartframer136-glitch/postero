@@ -3163,3 +3163,13 @@ add_filter('wp_nav_menu_items', function($items, $args) {
   return $items;
 }, 10, 2);
 
+
+
+// Enable WooCommerce registration on my-account page
+add_action('init', function() {
+  update_option('woocommerce_enable_myaccount_registration', 'yes');
+  update_option('woocommerce_enable_checkout_login_reminder', 'yes');
+  update_option('woocommerce_registration_generate_password', 'yes');
+  update_option('woocommerce_registration_generate_username', 'no');
+});
+
